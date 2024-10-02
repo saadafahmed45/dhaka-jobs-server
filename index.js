@@ -9,7 +9,7 @@ app.use(express.json());
 //Must remove "/" from your production URL
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://dhaka-jobs.vercel.app/"],
+    origin: ["http://localhost:3000", "https://dhaka-jobs.vercel.app"],
     credentials: true,
   })
 );
