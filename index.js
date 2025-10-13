@@ -1,10 +1,11 @@
+// server.js
 const express = require("express");
 const app = express();
 const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
-const { MongoClient, ObjectId, ServerApiVersion } = require("mongodb");
 
 // Middleware
 app.use(
@@ -13,9 +14,9 @@ app.use(
     credentials: true,
   })
 );
-
 app.use(express.json());
-// Serve uploaded CVs
+
+// Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Multer setup
@@ -26,59 +27,57 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // MongoDB connection
-const client = new MongoClient(
-  `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.58zpnyp.mongodb.net/?retryWrites=true&w=majority`,
-  { serverApi: { version: ServerApiVersion.v1 } }
-);
+const dbUserName = process.env.DB_USER;
+const dbPassword = process.env.DB_PASS;
+const uri = `mongodb+srv://${dbUserName}:${dbPassword}@cluster0.58zpnyp.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+const client = new MongoClient(uri, {
+  serverApi: { version: ServerApiVersion.v1 },
+});
 
 async function run() {
   try {
     await client.connect();
-    const db = client.db("dhakaPortalDb404");
-    const jobsCollection = db.collection("jobs");
-    const appliedCollection = db.collection("applied");
+    const database = client.db("dhakaPortalDb404");
+    const jobsCollection = database.collection("jobs");
+    const appliedCollection = database.collection("applied");
 
-    // Get all jobs
+    // GET all jobs
     app.get("/jobs", async (req, res) => {
-      const jobs = await jobsCollection.find().toArray();
-      res.send(jobs);
+      const result = await jobsCollection.find().toArray();
+      res.json(result);
     });
 
-    // Get single job
+    // GET single job
     app.get("/jobs/:id", async (req, res) => {
-      const job = await jobsCollection.findOne({
+      const result = await jobsCollection.findOne({
         _id: new ObjectId(req.params.id),
       });
-      res.send(job);
-    });
-
-    // Get all applied jobs
-    app.get("/applied", async (req, res) => {
-      const applied = await appliedCollection.find().toArray();
-      res.send(applied);
+      res.json(result);
     });
 
     // POST applied job with CV
     app.post("/applied", upload.single("cv"), async (req, res) => {
       try {
-        const appliedData = JSON.parse(req.body.appliedData); // parse JSON
-        if (req.file) {
-          appliedData.cvLink = `/uploads/${req.file.filename}`;
-        }
+        const appliedData = JSON.parse(req.body.appliedData);
+        if (req.file) appliedData.cvLink = `/uploads/${req.file.filename}`;
+
         const result = await appliedCollection.insertOne(appliedData);
-        res.send({ success: true, result });
+        res.json({ success: true, result });
       } catch (err) {
-        res.status(500).send({ success: false, message: err.message });
+        console.error(err);
+        res.status(500).json({ success: false, message: err.message });
       }
     });
 
-    console.log("Server running and MongoDB connected!");
-  } finally {
-    // optional client.close()
+    // GET all applied jobs
+    app.get("/applied", async (req, res) => {
+      const result = await appliedCollection.find().toArray();
+      res.json(result);
+    });
+
+    app.listen(process.env.PORT || 5000, () => console.log("Server running"));
+  } catch (err) {
+    console.error(err);
   }
 }
-
 run().catch(console.dir);
-
-const port = process.env.PORT || 5000;
-app.listen(port, () => console.log(`Server running on port ${port}`));
