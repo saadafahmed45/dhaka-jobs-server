@@ -7,17 +7,25 @@ app.use(express.json());
 
 //middleware
 //Must remove "/" from your production URL
+// app.use(
+//   cors({
+//     origin: [
+//       "http://localhost:3000",
+//       "http://localhost:192.168.0.108:3000",
+//       "192.168.0.108:3000",
+//       "https://dhaka-jobs.vercel.app",
+//     ],
+//     credentials: true,
+//   })
+// );
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:3000",
-      "http://localhost:192.168.0.108:3000",
-      "192.168.0.108:3000",
-      "https://dhaka-jobs.vercel.app",
-    ],
+    origin: true, // Allow all origins
     credentials: true,
   })
 );
+
 require("dotenv").config();
 
 // const dbuser = jobsRelexDb;
