@@ -11,6 +11,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:3000",
+      "http://localhost:192.168.0.108:3000",
       "192.168.0.108:3000",
       "https://dhaka-jobs.vercel.app",
     ],
